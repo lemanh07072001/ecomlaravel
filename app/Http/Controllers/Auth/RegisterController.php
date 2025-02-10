@@ -28,7 +28,7 @@ class RegisterController extends Controller
      *
      * @var string
      */
-    protected $redirectTo = '/home';
+    protected $redirectTo = 'admin/dashboard';
 
     /**
      * Create a new controller instance.
@@ -49,10 +49,26 @@ class RegisterController extends Controller
     protected function validator(array $data)
     {
         return Validator::make($data, [
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
+            'username' => ['required', 'string', 'max:255', 'min:6'],
+            'email' => ['required', 'string', 'email', 'max:255', 'min:6', 'unique:users'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
-        ]);
+        ],
+          [
+            'username.required' => 'Vui lòng nhập tên người dùng.',
+            'username.string' => 'Tên người dùng phải là một chuỗi ký tự.',
+            'username.max' => 'Tên người dùng không được vượt quá 255 ký tự.',
+            'username.min' => 'Tên người dùng phải có ít nhất 6 ký tự.',
+            'email.required' => 'Vui lòng nhập địa chỉ email.',
+            'email.string' => 'Email phải là một chuỗi ký tự.',
+            'email.email' => 'Địa chỉ email không hợp lệ.',
+            'email.max' => 'Email không được vượt quá 255 ký tự.',
+            'email.min' => 'Email phải có ít nhất 6 ký tự.',
+            'email.unique' => 'Email đã được sử dụng.',
+            'password.required' => 'Vui lòng nhập mật khẩu.',
+            'password.string' => 'Mật khẩu phải là một chuỗi ký tự.',
+            'password.min' => 'Mật khẩu phải có ít nhất 8 ký tự.',
+            'password.confirmed' => 'Xác nhận mật khẩu không khớp.',
+          ]);
     }
 
     /**
@@ -64,7 +80,7 @@ class RegisterController extends Controller
     protected function create(array $data)
     {
         return User::create([
-            'name' => $data['name'],
+            'name' => $data['username'],
             'email' => $data['email'],
             'password' => Hash::make($data['password']),
         ]);

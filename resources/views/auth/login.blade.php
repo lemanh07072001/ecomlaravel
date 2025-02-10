@@ -31,8 +31,12 @@ $customizerHidden = 'customizer-hide';
 
 @section('page-script')
 @vite([
-  'resources/assets/js/login.js'
+  'resources/assets/js/pages/login.js'
 ])
+
+<script>
+  const URL_DASHBOARD = {{ Illuminate\Support\Js::from(route('dashboard')) }};
+</script>
 @endsection
 
 @section('content')
@@ -86,7 +90,7 @@ $customizerHidden = 'customizer-hide';
 
           <p class="text-center">
             <span>Chưa có tài khoản?</span>
-            <a href="{{url('auth/register-basic')}}">
+            <a href="{{route('register')}}">
               <span>Đăng ký</span>
             </a>
           </p>
