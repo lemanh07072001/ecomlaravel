@@ -7,6 +7,12 @@
       "slug": "dashboard"
     },
     {
+      "url": "/admin/permission",
+      "name": "Phân quyền",
+      "icon": "menu-icon tf-icons ti ti-smart-home",
+      "slug": "permission"
+    },
+    {
       "url": "/",
       "name": "Home",
       "icon": "menu-icon tf-icons ti ti-smart-home",

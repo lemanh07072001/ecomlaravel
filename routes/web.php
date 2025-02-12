@@ -9,10 +9,20 @@ use App\Http\Controllers\pages\MiscError;
 use App\Http\Controllers\authentications\LoginBasic;
 use App\Http\Controllers\language\LanguageController;
 use App\Http\Controllers\authentications\RegisterBasic;
+use \App\Http\Controllers\Admin\PermissionController;
 
 // Main Page Route
 Route::prefix('admin')->middleware(['auth'])->group(function () {
   Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
+  // Permission
+  Route::get('/permission', [PermissionController::class, 'index'])->name('permission');
+  Route::get('/get-permissions', [PermissionController::class, 'getPermissions'])->name('getPermissions');
+  Route::get('/get_edit-permissions', [PermissionController::class, 'getEditPermissions'])->name('getEditPermissions');
+  Route::get('/get-roles', [PermissionController::class, 'getRoles'])->name('getRoles');
+  Route::delete('/delete-roles', [PermissionController::class, 'deleteRole'])->name('deleteRole');
+  Route::post('/add-role', [PermissionController::class, 'addRole'])->name('addRole');
+
   Route::get('/', [HomePage::class, 'index'])->name('home')->name('home');
 });
 
