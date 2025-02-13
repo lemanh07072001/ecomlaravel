@@ -34,7 +34,7 @@
             <!-- Permission table -->
           </div>
           <div class="col-12 text-center">
-            <button type="submit" class="btn btn-primary me-3" id="btnSubmit">Xác nhận</button>
+            <button type="submit" class="btn btn-primary me-3" id="btnSubmitAdd">Xác nhận</button>
             <button
               type="reset"
               class="btn btn-label-secondary"

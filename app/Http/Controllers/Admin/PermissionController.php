@@ -40,6 +40,8 @@ class PermissionController extends Controller
         'name.required' => 'Tên vai trò không được để trống.',
         'name.string'   => 'Tên vai trò phải là một chuỗi ký tự.',
         'name.unique'   => 'Tên vai trò này đã tồn tại, vui lòng chọn tên khác.',
+        'name.min'      => 'Tên vai trò không đuọc nhỏ hơn :min ký tự.',
+        'name.max'      => 'Tên vai trò không đuọc lớn hơn :max ký tự.',
       ]);
 
       if ($validator->fails()) {
@@ -47,6 +49,27 @@ class PermissionController extends Controller
       }
 
       return $this->service->addRole($request);
+    }
+
+    public function editRole(Request $request)
+    {
+      $id = $request->input('id');
+
+      $validator = Validator::make($request->all(), [
+        'name' => 'required|string|min:6|max:255|unique:roles,name,'.$id,
+      ],[
+        'name.required' => 'Tên vai trò không được để trống.',
+        'name.string'   => 'Tên vai trò phải là một chuỗi ký tự.',
+        'name.unique'   => 'Tên vai trò này đã tồn tại, vui lòng chọn tên khác.',
+        'name.min'      => 'Tên vai trò không đuọc nhỏ hơn :min ký tự.',
+        'name.max'      => 'Tên vai trò không đuọc lớn hơn :max ký tự.',
+      ]);
+
+      if ($validator->fails()) {
+        return response()->json(['errors' => $validator->errors()], 422);
+      }
+
+      return $this->service->editRole($request);
     }
 
     public function deleteRole(Request $request)
@@ -59,5 +82,8 @@ class PermissionController extends Controller
       return $this->service->getEditPermissions($request);
     }
 
-
+    public function getUserList(Request $request)
+    {
+        return $this->service->getUserList($request);
+    }
 }

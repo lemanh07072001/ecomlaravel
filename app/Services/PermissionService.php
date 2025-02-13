@@ -2,6 +2,7 @@
 
 namespace App\Services;
 use App\Helpers\ResponseHelper;
+use App\Models\User;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
 class PermissionService
@@ -39,6 +40,43 @@ class PermissionService
     }
   }
 
+  public function editRole($request)
+  {
+    $id         = $request->input('id');
+    $name       = $request->input('name');
+    $arrayRoles = $request->input('arrayRoles');
+
+    try{
+      $role = $this->getFindId($id);
+      if($role){
+        $role->update(['name' => $name]);
+        $role->syncPermissions($arrayRoles);
+
+        return ResponseHelper::senSucess('Cập nhật vai trò thành công!');
+      }
+
+      return ResponseHelper::senError('Cập nhật dữ liệu thất bại! Vui lòng thử lại.');
+    }catch (\Exception $exception){
+      logger('Error: PermissionController - editRole - Message: '.$exception->getMessage());
+      return ResponseHelper::senError('Lỗi hệ thống vui lòng liên hệ quản trị viên.');
+    }
+  }
+
+  public function getUserList($request)
+  {
+      $search_input = $request->input('search');
+      $users = User::with('roles')
+                      ->when($search_input,function ($query) use($search_input){
+                          $query->where('name','like','%'.$search_input.'%');
+                          $query->orWhere('email','like','%'.$search_input.'%');
+                      })
+                      ->get();
+
+      return response()->json([
+        'data' => $users,
+      ]);
+  }
+
   public function getFindId($id)
   {
     return Role::find($id);
@@ -48,16 +86,20 @@ class PermissionService
   {
       $id = $request->input('id');
 
-      $getRolePermission = Role::with('permissions')->where('id',$id)->first()->permissions->pluck('id');
+      $getRolePermission = Role::with('permissions')->where('id',$id)->first();
 
       $roleName = $getRolePermission->name;
+
+      $getArrayIdPermission = $getRolePermission->permissions->pluck('id');
+
+
 
       $getPermission = $this->getPermissions();
 
 
       return ResponseHelper::senSucess('Lấy dữ liệu thành công.',[
         'dataPermission' => $getPermission,
-        'getRolePermission' => $getRolePermission,
+        'getArrayIdPermission' => $getArrayIdPermission,
         'roleName' => $roleName
       ]);
   }

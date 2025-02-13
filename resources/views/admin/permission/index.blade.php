@@ -6,27 +6,6 @@ $configData = Helper::appClasses();
 
 @section('title', 'Home')
 
-@section('vendor-style')
-  @vite([
-    'resources/assets/vendor/libs/@form-validation/form-validation.scss',
-    'resources/assets/vendor/libs/toastr/toastr.scss',
-    'resources/assets/vendor/fonts/fontawesome.scss',
-    'resources/assets/vendor/libs/animate-css/animate.scss',
-    'resources/assets/vendor/libs/sweetalert2/sweetalert2.scss"'
-  ])
-@endsection
-
-@section('vendor-script')
-  @vite([
-    'resources/assets/vendor/libs/toastr/toastr.js',
-    'resources/assets/vendor/libs/@form-validation/popular.js',
-    'resources/assets/vendor/libs/@form-validation/bootstrap5.js',
-    'resources/assets/vendor/libs/@form-validation/auto-focus.js',
-    'resources/assets/vendor/libs/sweetalert2/sweetalert2.js'
-  ])
-@endsection
-
-
 @section('page-script')
   @vite([
     'resources/assets/js/pages/permission.js'
@@ -38,6 +17,8 @@ $configData = Helper::appClasses();
     const URL_RENDER_ROLE = {{ Illuminate\Support\Js::from(route('getRoles')) }};
     const URL_DELETE_ROLE = {{ Illuminate\Support\Js::from(route('deleteRole')) }};
     const URL_GET_EDIT_PERMISSIONS = {{ Illuminate\Support\Js::from(route('getEditPermissions')) }};
+    const URL_EDIT_ROLE = {{ Illuminate\Support\Js::from(route('editRole')) }};
+    const URL_GET_USERS = {{ Illuminate\Support\Js::from(route('getUserList')) }};
 
     const ASSETS_URL = function(url){
       return "{{ asset('') }}" + url;

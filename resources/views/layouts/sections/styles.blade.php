@@ -9,6 +9,21 @@
   'resources/assets/vendor/fonts/fontawesome.scss',
   'resources/assets/vendor/fonts/flag-icons.scss',
   'resources/assets/vendor/libs/node-waves/node-waves.scss',
+
+  'resources/assets/vendor/libs/@form-validation/form-validation.scss',
+  'resources/assets/vendor/libs/toastr/toastr.scss',
+  'resources/assets/vendor/fonts/fontawesome.scss',
+  'resources/assets/vendor/libs/animate-css/animate.scss',
+  'resources/assets/vendor/libs/sweetalert2/sweetalert2.scss',
+
+
+  'resources/assets/vendor/libs/perfect-scrollbar/perfect-scrollbar.scss',
+  'resources/assets/vendor/libs/typeahead-js/typeahead.scss',
+  'resources/assets/vendor/libs/datatables-bs5/datatables.bootstrap5.scss',
+  'resources/assets/vendor/libs/datatables-responsive-bs5/responsive.bootstrap5.scss',
+  'resources/assets/vendor/libs/@form-validation/form-validation.scss',
+  'resources/assets/vendor/libs/datatables-buttons-bs5/buttons.bootstrap5.scss',
+  'resources/assets/vendor/libs/select2/select2.scss',
 ])
 <!-- Core CSS -->
 @vite(['resources/assets/vendor/scss'.$configData['rtlSupport'].'/core' .($configData['style'] !== 'light' ? '-' . $configData['style'] : '') .'.scss',

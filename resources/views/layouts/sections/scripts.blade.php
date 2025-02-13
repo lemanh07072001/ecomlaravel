@@ -8,7 +8,20 @@
   'resources/assets/vendor/libs/perfect-scrollbar/perfect-scrollbar.js',
   'resources/assets/vendor/libs/hammer/hammer.js',
   'resources/assets/vendor/libs/typeahead-js/typeahead.js',
-  'resources/assets/vendor/js/menu.js'
+  'resources/assets/vendor/js/menu.js',
+
+  'resources/assets/vendor/libs/toastr/toastr.js',
+  'resources/assets/vendor/libs/@form-validation/popular.js',
+  'resources/assets/vendor/libs/@form-validation/bootstrap5.js',
+  'resources/assets/vendor/libs/@form-validation/auto-focus.js',
+  'resources/assets/vendor/libs/sweetalert2/sweetalert2.js',
+
+  'resources/assets/vendor/libs/datatables-bs5/datatables-bootstrap5.js',
+  'resources/assets/vendor/libs/select2/select2.js',
+  'resources/assets/vendor/libs/@form-validation/popular.js',
+  'resources/assets/vendor/libs/@form-validation/popular.js',
+  'resources/assets/vendor/libs/@form-validation/auto-focus.js',
+
 ])
 
 @yield('vendor-script')

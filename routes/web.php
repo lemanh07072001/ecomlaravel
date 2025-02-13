@@ -22,6 +22,8 @@ Route::prefix('admin')->middleware(['auth'])->group(function () {
   Route::get('/get-roles', [PermissionController::class, 'getRoles'])->name('getRoles');
   Route::delete('/delete-roles', [PermissionController::class, 'deleteRole'])->name('deleteRole');
   Route::post('/add-role', [PermissionController::class, 'addRole'])->name('addRole');
+  Route::post('/edit-role', [PermissionController::class, 'editRole'])->name('editRole');
+  Route::get('/get-users-list', [PermissionController::class, 'getUserList'])->name('getUserList');
 
   Route::get('/', [HomePage::class, 'index'])->name('home')->name('home');
 });

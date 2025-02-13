@@ -9,14 +9,19 @@ $(function () {
   const ROLE_TABLE_EDIT = $('#roleTableEdit');
   const FORM_PERMISSION_EDIT = $('#editRoleForm')[0];
 
-  const PERMISSION_SUBMIT_BTN = $('#btnSubmit');
+  const PERMISSION_SUBMIT_BTN_ADD = $('#btnSubmitAdd');
+  const PERMISSION_SUBMIT_BTN_EDIT = $('#btnSubmitEdit');
 
   const LIST_CARD_ROLE = $('.list_card_role');
   const BTN_DELETE = '.btnDelete';
-  const BTN_EDIT = '.';
+
+  const DT_USER_TABLE = $('.datatables-users ');
+
+  let formPermissionEdit;
+  let formPermissionAdd;
 
   window.permission = {
-    init: function () {
+    init              : function () {
       permission.ShowAddModalRole();
       permission.ShowEditModalRole();
       permission.CreateModalRole();
@@ -24,9 +29,12 @@ $(function () {
       permission.RenderBoxRoles();
       permission.DeleteRole();
       permission.OptionToast();
-      permission.CloneModalRole();
+      permission.HandleModalRoleAdd();
+      permission.HandleModalRoleEdit();
+      permission.EditModalRole();
+      permission.ListUser();
     },
-    OptionToast: function () {
+    OptionToast           : function () {
       toastr.options = {
         closeButton: false,
         debug: false,
@@ -45,7 +53,7 @@ $(function () {
         hideMethod: 'fadeOut'
       };
     },
-    ShowAddModalRole: function () {
+    ShowAddModalRole      : function () {
       $(MODAL_ADD_ROLE).on('show.bs.modal', function () {
         $.ajax({
           url: URL_GET_PERMISSIONS,
@@ -82,14 +90,51 @@ $(function () {
         });
       });
     },
-    CloneModalRole: function () {
+    HandleModalRoleAdd     : function () {
+
+      // Khi mở Modal
+      $(MODAL_ADD_ROLE).on('shown.bs.modal', function () {
+
+      });
+
+      // Khi đóng Modal
       $(MODAL_ADD_ROLE).on('hide.bs.modal', function () {
         $('#name').val('');
         $('#selectAll').prop('checked', false);
+
+        //Reset Form
+        if (formPermissionAdd){
+          formPermissionAdd.resetForm(true)
+        }
       });
     },
-    CreateModalRole: function () {
-      const formPermission = FormValidation.formValidation(FORM_PERMISSION_ADD, {
+    HandleModalRoleEdit    : function () {
+      // khi mở Modal
+      $(MODAL_EDIT_ROLE).on('shown.bs.modal', function () {
+        let allChecked = true; // Giả định tất cả đều được check
+
+        $('#editRoleForm .select-input').each(function () {
+          if (!$(this).prop('checked')) {
+            allChecked = false; // Nếu có ít nhất một checkbox không được check
+            return false; // Thoát khỏi vòng lặp
+          }
+        });
+
+        // Cập nhật trạng thái checkbox "Select All"
+        $('#editRoleForm #selectAll').prop('checked', allChecked);
+      });
+
+
+
+      // Khi đóng Modal
+      $(MODAL_EDIT_ROLE).on('hide.bs.modal', function () {
+        if (formPermissionEdit) {
+          formPermissionEdit.resetForm(true);
+        }
+      });
+    },
+    CreateModalRole       : function () {
+      formPermissionAdd = FormValidation.formValidation(FORM_PERMISSION_ADD, {
         fields: {
           name: {
             validators: {
@@ -145,7 +190,7 @@ $(function () {
               '<div class="d-flex justify-content-center align-items-center;">' +
               '<span class="spinner-border me-2 " style="width: 20px; height: 20px" role="status" aria-hidden="true"></span> ' +
               '<span>Đang xử lý ...</span></div> ';
-            PERMISSION_SUBMIT_BTN.html('').html(html).attr('disabled', true);
+            PERMISSION_SUBMIT_BTN_ADD.html('').html(html).attr('disabled', true);
           },
           success: function (data) {
             if (data.success === true) {
@@ -182,16 +227,16 @@ $(function () {
           }
         })
           .done(function () {
-            PERMISSION_SUBMIT_BTN.html('Xác nhận');
-            PERMISSION_SUBMIT_BTN.prop('disabled', false);
+            PERMISSION_SUBMIT_BTN_ADD.html('Xác nhận');
+            PERMISSION_SUBMIT_BTN_ADD.prop('disabled', false);
           })
           .fail(function () {
-            PERMISSION_SUBMIT_BTN.html('Xác nhận');
-            PERMISSION_SUBMIT_BTN.prop('disabled', false);
+            PERMISSION_SUBMIT_BTN_ADD.html('Xác nhận');
+            PERMISSION_SUBMIT_BTN_ADD.prop('disabled', false);
           });
       });
     },
-    SelectAllCheckBox: function () {
+    SelectAllCheckBox     : function () {
       // ModalAdd
       $('#addRoleForm #selectAll').on('click', function () {
         let isChecked = $(this).prop('checked'); // Kiểm tra trạng thái của checkbox "Chọn tất cả"
@@ -214,7 +259,7 @@ $(function () {
         $('#editRoleForm #selectAll').prop('checked', allChecked);
       });
     },
-    RenderBoxRoles: function () {
+    RenderBoxRoles        : function () {
       $.ajax({
         url: URL_RENDER_ROLE,
         method: 'get',
@@ -228,7 +273,7 @@ $(function () {
         }
       });
     },
-    HtmlBoxRoles: function (data) {
+    HtmlBoxRoles          : function (data) {
       let html = '';
       $(data).each(function (key, item) {
         html += `
@@ -325,7 +370,7 @@ $(function () {
 
       return html;
     },
-    DeleteRole: function () {
+    DeleteRole            : function () {
       $(document).on('click', BTN_DELETE, function () {
         let id = $(this).data('id');
 
@@ -371,7 +416,7 @@ $(function () {
         });
       });
     },
-    ShowEditModalRole: function () {
+    ShowEditModalRole     : function () {
       $(document).on('click', '.btnEdit', function () {
         let roleId = $(this).data('id'); // Lấy ID từ button
         MODAL_EDIT_ROLE.data('id', roleId); // Gán ID vào modal
@@ -387,14 +432,239 @@ $(function () {
           },
           success: function (req) {
             let data = req?.data?.dataPermission;
-            let permissionArray = req?.data?.getRolePermission;
+            let permissionArray = req?.data?.getArrayIdPermission;
             let roleName = req?.data?.roleName;
-            console.log(permissionArray);
+
             let html = '';
 
-            
+            if (req.success){
+              $('#editRoleForm #name').val(roleName)
+
+              html += `
+                 ${Object.entries(data)
+                .map(
+                  ([group, permissionList], index) => `
+                       <div class="text-light fw-medium mt-3">${group}</div>
+                        <div class="demo-inline-spacing mt-4">
+                        <div class="list-group">
+                        ${permissionList
+                    .map(
+                      permission => `
+                              <label class="list-group-item">
+                                <input class="form-check-input me-1 select-input" type="checkbox"  value="${permission.id}" data-id="${permission.id}" data-name="${permission.name}" ${permissionArray.includes(permission.id) ? 'checked' : ''}/>
+                                ${permission.name}
+                              </label>
+                              `
+                    )
+                    .join('')}
+
+                        </div>
+                      </div>
+                        `
+                )
+                .join('')}
+              `;
+              $(ROLE_TABLE_EDIT).html(html);
+            }
+
           }
         });
+      });
+    },
+    EditModalRole         : function(){
+      formPermissionEdit = FormValidation.formValidation(FORM_PERMISSION_EDIT, {
+        fields: {
+          name: {
+            validators: {
+              notEmpty: {
+                message: 'Vui lòng nhập tên vai trò.'
+              },
+              stringLength: {
+                min: 6,
+                max: 255,
+                message: 'Tên vai trò phải có từ 6 đến 255 ký tự'
+              },
+              blank: {}
+            }
+          }
+        },
+        plugins: {
+          trigger: new FormValidation.plugins.Trigger(),
+          bootstrap5: new FormValidation.plugins.Bootstrap5({
+            eleValidClass: '',
+            rowSelector: '.mb-1'
+          }),
+          submitButton: new FormValidation.plugins.SubmitButton(),
+          autoFocus: new FormValidation.plugins.AutoFocus()
+        },
+        init: instance => {
+          instance.on('plugins.message.placed', function (e) {
+            if (e.element.parentElement.classList.contains('input-group')) {
+              e.element.parentElement.insertAdjacentElement('afterend', e.messageElement);
+            }
+          });
+        }
+      }).on('core.form.valid', function (e) {
+        let arrayRoles = [];
+
+        $('#editRoleForm .select-input:checked').each(function () {
+          arrayRoles.push($(this).data('name'));
+        });
+
+        const DATA = {
+          name: $('#editRoleForm #name').val(),
+          id: MODAL_EDIT_ROLE.data('id'),
+          arrayRoles: arrayRoles,
+          _token: $('meta[name="csrf-token"]').attr('content')
+        };
+
+        $.ajax({
+          url: URL_EDIT_ROLE,
+          method: 'post',
+          data: DATA,
+          dataType: 'json',
+          beforeSend: function (xhr) {
+            xhr.setRequestHeader('X-CSRF-TOKEN', $('meta[name="csrf-token"]').attr('content'));
+            var html =
+              '<div class="d-flex justify-content-center align-items-center;">' +
+              '<span class="spinner-border me-2 " style="width: 20px; height: 20px" role="status" aria-hidden="true"></span> ' +
+              '<span>Đang xử lý ...</span></div> ';
+            PERMISSION_SUBMIT_BTN_EDIT.html('').html(html).attr('disabled', true);
+          },
+          success: function (data) {
+            if (data.success === true) {
+              // Hiện thông báo đăng nhập thành công.
+              toastr.success(data.message, 'Thành công!');
+
+              setTimeout(function () {
+                MODAL_EDIT_ROLE.modal('hide');
+
+                // Render lại dũe liệu
+                permission.RenderBoxRoles();
+              }, 200);
+            } else {
+              toastr.error(data.message, 'Thất bại!');
+            }
+          },
+          error: function (response) {
+            // Hiện thông báo lỗi lỗi
+            if (response.responseJSON.success === false) {
+              toastr.error(response.responseJSON.message, 'Thất bại');
+            }
+
+            // Hiện thông báo lỗi trường input do server trả về
+            let errors = response.responseJSON.errors;
+
+            for (const field in errors) {
+              let message = errors[field].join(', ');
+              formPermission
+                // Update the message option
+                .updateValidatorOption(field, 'blank', 'message', message)
+                // Set the field as invalid
+                .updateFieldStatus(field, 'Invalid', 'blank');
+            }
+          }
+        })
+          .done(function () {
+            PERMISSION_SUBMIT_BTN_EDIT.html('Xác nhận');
+            PERMISSION_SUBMIT_BTN_EDIT.prop('disabled', false);
+          })
+          .fail(function () {
+            PERMISSION_SUBMIT_BTN_EDIT.html('Xác nhận');
+            PERMISSION_SUBMIT_BTN_EDIT.prop('disabled', false);
+          });
+      });
+
+
+    },
+    ListUser              : function(){
+      var dtUser = DT_USER_TABLE.DataTable({
+        ajax: URL_GET_USERS, // JSON file to add data
+        columns: [
+          // columns according to JSON
+          { data: 'id' },
+          { data: 'full_name' },
+          { data: 'role' },
+          { data: 'status' },
+          { data: '' }
+        ],
+        columnDefs: [
+          {
+            // For Responsive
+            className: 'control',
+            orderable: false,
+            searchable: false,
+            responsivePriority: 2,
+            targets: 0,
+            render: function (data, type, full, meta) {
+              return '';
+            }
+          },
+          {
+            // For Checkboxes
+            targets: 1,
+            orderable: false,
+            checkboxes: {
+              selectAllRender: '<input type="checkbox" class="form-check-input">'
+            },
+            render: function () {
+
+            },
+            searchable: false
+          },
+          {
+            // User full name and email
+            targets: 2,
+            title: 'USER',
+            orderable: false,
+            responsivePriority: 4,
+            render: function (data, type, full, meta) {
+              console.log(full);
+
+            }
+          },
+          {
+            // User Role
+            title: 'Role',
+            targets: 3,
+            orderable: false,
+            render: function (data, type, full, meta) {
+
+            }
+          },
+          {
+            // User Status
+            title: 'Status',
+            targets: 4,
+            orderable: false,
+            render: function (data, type, full, meta) {
+
+            }
+          },
+          {
+            // Actions
+            targets: -1,
+            title: 'Actions',
+            searchable: false,
+            orderable: false,
+            render: function (data, type, full, meta) {
+
+            }
+          }
+        ],
+        order: [[2, 'desc']],
+
+        language: {
+          sLengthMenu: 'Show _MENU_',
+          search: '',
+          searchPlaceholder: 'Search User',
+          paginate: {
+            next: '<i class="ti ti-chevron-right ti-sm"></i>',
+            previous: '<i class="ti ti-chevron-left ti-sm"></i>'
+          }
+        },
+
+
       });
     }
   };
