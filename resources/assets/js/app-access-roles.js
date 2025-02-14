@@ -39,6 +39,7 @@ $(function () {
           searchable: false,
           responsivePriority: 2,
           targets: 0,
+          
           render: function (data, type, full, meta) {
             return '';
           }

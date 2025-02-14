@@ -72,6 +72,28 @@ class PermissionController extends Controller
       return $this->service->editRole($request);
     }
 
+    public function updateRoleUser(Request $request)
+    {
+
+      $validator = Validator::make($request->all(), [
+        'name' => 'required',
+      ],[
+        'name.required' => 'Tên vai trò không được để trống.',
+
+      ]);
+
+      if ($validator->fails()) {
+        return response()->json(['errors' => $validator->errors()], 422);
+      }
+
+      return $this->service->updateRoleUser($request);
+    }
+
+    public function removeRoleUser(Request $request)
+    {
+        return $this->service->removeRoleUser($request);
+    }
+
     public function deleteRole(Request $request)
     {
       return $this->service->deleteRole($request);
@@ -85,5 +107,10 @@ class PermissionController extends Controller
     public function getUserList(Request $request)
     {
         return $this->service->getUserList($request);
+    }
+
+    public function checkPermission(Request $request)
+    {
+        return $this->service->checkPermission($request);
     }
 }

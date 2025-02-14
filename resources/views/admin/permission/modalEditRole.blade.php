@@ -6,7 +6,7 @@
       <div class="modal-body">
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         <div class="text-center mb-6">
-          <h4 class="role-title mb-2">Thêm vai trò mới</h4>
+          <h4 class="role-title mb-2">Cập nhật vai trò mới</h4>
           <p>Thiết lập quyền vai trò</p>
         </div>
         <!-- Add role form -->

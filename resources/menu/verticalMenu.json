@@ -4,13 +4,15 @@
       "url": "/admin/dashboard",
       "name": "Dashboard",
       "icon": "menu-icon tf-icons ti ti-smart-home",
-      "slug": "dashboard"
+      "slug": "dashboard",
+        "permission": "Xem trang chủ"
     },
     {
       "url": "/admin/permission",
       "name": "Phân quyền",
       "icon": "menu-icon tf-icons ti ti-smart-home",
-      "slug": "permission"
+      "slug": "permission",
+        "permission": "Xem danh sách vai trò"
     },
     {
       "url": "/",

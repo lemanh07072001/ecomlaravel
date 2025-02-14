@@ -58,7 +58,9 @@ $configData = Helper::appClasses();
       }
       @endphp
 
+
       {{-- main menu --}}
+      @if (isset($menu->permission) && auth()->user()->can($menu->permission))
       <li class="menu-item {{$activeClass}}">
         <a href="{{ isset($menu->url) ? url($menu->url) : 'javascript:void(0);' }}" class="{{ isset($menu->submenu) ? 'menu-link menu-toggle' : 'menu-link' }}" @if (isset($menu->target) and !empty($menu->target)) target="_blank" @endif>
           @isset($menu->icon)
@@ -69,7 +71,7 @@ $configData = Helper::appClasses();
             <div class="badge bg-{{ $menu->badge[0] }} rounded-pill ms-auto">{{ $menu->badge[1] }}</div>
           @endisset
         </a>
-
+         @endif
         {{-- submenu --}}
         @isset($menu->submenu)
           @include('layouts.sections.menu.submenu',['menu' => $menu->submenu])

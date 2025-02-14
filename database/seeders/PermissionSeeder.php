@@ -53,6 +53,12 @@ class PermissionSeeder extends Seeder
                 'name'          => 'Phân quyền',
                 'group'         => 'Quản lý phân quyền',
             ],
+
+            // Quản lý trang chủ
+            [
+              'name'          => 'Xem trang chủ',
+              'group'         => 'Quản lý trang chủ',
+            ],
         ];
 
         foreach ($dataPermissions as $permission) {

@@ -23,6 +23,21 @@ class User extends Authenticatable
     'password',
   ];
 
+  const STATUS_KEY = [
+    'Inactive' => 0,
+    'Active'   => 1,
+  ];
+
+  const STATUS_TEXT = [
+    0 => 'Không hoạt động',
+    1 => 'Đang hoạt động'
+  ];
+
+  const STATUS_CLASS = [
+    0 => 'bg-danger',
+    1 => 'bg-success'
+  ];
+
   /**
    * The attributes that should be hidden for serialization.
    *

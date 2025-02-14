@@ -9,16 +9,27 @@ $(function () {
   const ROLE_TABLE_EDIT = $('#roleTableEdit');
   const FORM_PERMISSION_EDIT = $('#editRoleForm')[0];
 
+  const MODAL_EDIT_ROLE_USER = $('#editRoleUserModal');
+  const FORM_ROLE_USER_UPDATE = $('#editRoleUserForm')[0];
+
   const PERMISSION_SUBMIT_BTN_ADD = $('#btnSubmitAdd');
   const PERMISSION_SUBMIT_BTN_EDIT = $('#btnSubmitEdit');
+  const PERMISSION_SUBMIT_BTN_ROLE_USER = $('#submitRoleUser');
+
 
   const LIST_CARD_ROLE = $('.list_card_role');
   const BTN_DELETE = '.btnDelete';
+  const BTN_DELETE_USER = '.removeRoleUser';
+  const BTN_EDIT_ROLE_USER = '.editRoleUser';
 
-  const DT_USER_TABLE = $('.datatables-users ');
+  const DT_USER_TABLE = $('.datatables-users');
+  const SELECT_ROLE_USER = $('#selectRoleUser');
 
   let formPermissionEdit;
   let formPermissionAdd;
+  let formRoleUser;
+
+  let timeOut = 200;
 
   window.permission = {
     init              : function () {
@@ -29,10 +40,14 @@ $(function () {
       permission.RenderBoxRoles();
       permission.DeleteRole();
       permission.OptionToast();
-      permission.HandleModalRoleAdd();
-      permission.HandleModalRoleEdit();
+      permission.HandleModal();
       permission.EditModalRole();
       permission.ListUser();
+      permission.ShowEditModalRoleUser();
+      permission.UpdateModalRoleUser();
+      permission.DeleteRoleUser();
+
+
     },
     OptionToast           : function () {
       toastr.options = {
@@ -60,7 +75,6 @@ $(function () {
           method: 'get',
           success: function (req) {
             let html = '';
-            console.log(req);
             html += `
                  ${Object.entries(req)
                    .map(
@@ -86,30 +100,27 @@ $(function () {
                    .join('')}
               `;
             $(ROLE_TABLE).html(html);
+          },
+          error: function (xhr, status, error) {
+            let errorMessage = 'Có lỗi xảy ra, vui lòng thử lại!';
+
+            // Kiểm tra nếu server trả về JSON lỗi
+            if (xhr.responseJSON && xhr.responseJSON.message) {
+              errorMessage = xhr.responseJSON.message;
+            }
+
+            toastr.error(errorMessage, 'Lỗi!');
           }
         });
       });
     },
-    HandleModalRoleAdd     : function () {
+    HandleModal           : function () {
 
       // Khi mở Modal
       $(MODAL_ADD_ROLE).on('shown.bs.modal', function () {
 
       });
 
-      // Khi đóng Modal
-      $(MODAL_ADD_ROLE).on('hide.bs.modal', function () {
-        $('#name').val('');
-        $('#selectAll').prop('checked', false);
-
-        //Reset Form
-        if (formPermissionAdd){
-          formPermissionAdd.resetForm(true)
-        }
-      });
-    },
-    HandleModalRoleEdit    : function () {
-      // khi mở Modal
       $(MODAL_EDIT_ROLE).on('shown.bs.modal', function () {
         let allChecked = true; // Giả định tất cả đều được check
 
@@ -127,9 +138,25 @@ $(function () {
 
 
       // Khi đóng Modal
+      $(MODAL_ADD_ROLE).on('hide.bs.modal', function () {
+        $('#name').val('');
+        $('#selectAll').prop('checked', false);
+
+        //Reset Form
+        if (formPermissionAdd){
+          formPermissionAdd.resetForm(true)
+        }
+      });
+
       $(MODAL_EDIT_ROLE).on('hide.bs.modal', function () {
         if (formPermissionEdit) {
           formPermissionEdit.resetForm(true);
+        }
+      });
+
+      $(MODAL_EDIT_ROLE_USER).on('hide.bs.modal', function () {
+        if (formRoleUser) {
+          formRoleUser.resetForm(true);
         }
       });
     },
@@ -202,16 +229,18 @@ $(function () {
 
                 // Render lại dũe liệu
                 permission.RenderBoxRoles();
-              }, 200);
+              }, timeOut);
             } else {
               toastr.error(data.message, 'Thất bại!');
             }
           },
           error: function (response) {
             // Hiện thông báo lỗi lỗi
-            if (response.responseJSON.success === false) {
-              toastr.error(response.responseJSON.message, 'Thất bại');
+            if (response.status === 403) {
+              toastr.error('Bạn không có quyền truy cập.', 'Thất bại');
             }
+
+
 
             // Hiện thông báo lỗi trường input do server trả về
             let errors = response.responseJSON.errors;
@@ -264,16 +293,43 @@ $(function () {
         url: URL_RENDER_ROLE,
         method: 'get',
         success: function (req) {
-          console.log(req);
+
           let data = req.data;
 
           if (req.success) {
             permission.HtmlBoxRoles(data);
           }
+        },
+        error: function (xhr, status, error) {
+          let errorMessage = 'Có lỗi xảy ra, vui lòng thử lại!';
+
+          // Kiểm tra nếu server trả về JSON lỗi
+          if (xhr.responseJSON && xhr.responseJSON.message) {
+            errorMessage = xhr.responseJSON.message;
+          }
+
+          toastr.error(errorMessage, 'Lỗi!');
+        }
+      });
+    },
+    CheckPermission       : function(){
+      $.ajax({
+        url: URL_CHECK_PERMISSION,
+        type: 'GET',
+        dataType: 'json',
+        data: { permission: permission },
+        success: function(response) {
+          console.log(response);
+          callback(response.permission);
+        },
+        error: function () {
+          // Trong trường hợp lỗi, coi như không có quyền
+          callback(false);
         }
       });
     },
     HtmlBoxRoles          : function (data) {
+
       let html = '';
       $(data).each(function (key, item) {
         html += `
@@ -321,9 +377,9 @@ $(function () {
                               <div class="role-heading">
                                   <h5 class="mb-1">${item.name}</h5>
 
-                                  <a href="javascript:;" class="role-edit-modal btnEdit" data-id="${item.id}">
-                                      <span>${item.name != 'Super Admin' ? 'Edit Role' : ''}</span>
-                                  </a>
+                                   <a href="javascript:;" class="role-edit-modal btnEdit" data-id="${item.id}">
+                                        <span>${item.name != 'Super Admin' ? 'Cập nhật' : ''}</span>
+                                    </a>
                               </div>
                               ${item.name != 'Super Admin' ? '<a class="btnDelete" href="javascript:void(0);" data-bs-toggle="tooltip" data-popup="tooltip-custom" data-bs-placement="top" title="Xoá" data-id="' + item.id + '"><i class="fa-solid fa-trash-can text-heading"></i></a>' : ''}
                           </div>
@@ -406,10 +462,23 @@ $(function () {
                   setTimeout(function () {
                     // Render lại dũe liệu
                     permission.RenderBoxRoles();
-                  }, 200);
+
+                    // Render lại table
+                    DT_USER_TABLE.DataTable().ajax.reload(null,false);
+                  }, timeOut);
                 } else {
                   toastr.error(req.message, 'Thất bại!');
                 }
+              },
+              error: function (xhr, status, error) {
+                let errorMessage = 'Có lỗi xảy ra, vui lòng thử lại!';
+
+                // Kiểm tra nếu server trả về JSON lỗi
+                if (xhr.responseJSON && xhr.responseJSON.message) {
+                  errorMessage = xhr.responseJSON.message;
+                }
+
+                toastr.error(errorMessage, 'Lỗi!');
               }
             });
           }
@@ -467,6 +536,16 @@ $(function () {
               $(ROLE_TABLE_EDIT).html(html);
             }
 
+          },
+          error: function (xhr, status, error) {
+            let errorMessage = 'Có lỗi xảy ra, vui lòng thử lại!';
+
+            // Kiểm tra nếu server trả về JSON lỗi
+            if (xhr.responseJSON && xhr.responseJSON.message) {
+              errorMessage = xhr.responseJSON.message;
+            }
+
+            toastr.error(errorMessage, 'Lỗi!');
           }
         });
       });
@@ -541,7 +620,7 @@ $(function () {
 
                 // Render lại dũe liệu
                 permission.RenderBoxRoles();
-              }, 200);
+              }, timeOut);
             } else {
               toastr.error(data.message, 'Thất bại!');
             }
@@ -578,81 +657,112 @@ $(function () {
 
     },
     ListUser              : function(){
+
       var dtUser = DT_USER_TABLE.DataTable({
         ajax: URL_GET_USERS, // JSON file to add data
         columns: [
-          // columns according to JSON
           { data: 'id' },
-          { data: 'full_name' },
+
+          { data: 'email_qß' },
           { data: 'role' },
           { data: 'status' },
-          { data: '' }
+          { data: '' } // Actions
         ],
         columnDefs: [
           {
-            // For Responsive
+            // Responsive control column
             className: 'control',
             orderable: false,
             searchable: false,
             responsivePriority: 2,
             targets: 0,
+            width:'50px',
             render: function (data, type, full, meta) {
-              return '';
+              return ''; // Plugin Responsive sẽ tự chèn icon
             }
           },
           {
-            // For Checkboxes
+            // USER column
             targets: 1,
-            orderable: false,
-            checkboxes: {
-              selectAllRender: '<input type="checkbox" class="form-check-input">'
-            },
-            render: function () {
-
-            },
-            searchable: false
-          },
-          {
-            // User full name and email
-            targets: 2,
             title: 'USER',
             orderable: false,
             responsivePriority: 4,
             render: function (data, type, full, meta) {
-              console.log(full);
+              let avatar = full.avatar;
 
+              // Ví dụ: hiển thị tên cùng email
+              const html = `
+                <div class="d-flex justify-content-left align-items-center">
+                  <div class="avatar-wrapper">
+                    <div class="avatar avatar-sm me-4">
+                      ${avatar ? `<img src="${avatar}" alt="Avatar" class="rounded-circle">` : `<img src="${ASSETS_URL('assets/img/avatars/5.png')}" alt="Avatar" class="rounded-circle">`}
+                    </div>
+                  </div>
+                  <div class="d-flex flex-column">
+                    <a href="#" class="text-heading text-truncate">
+                      <span class="fw-medium">${full.name}</span>
+                    </a>
+                    <small>${full.email}</small>
+                  </div>
+                </div>`;
+              return html;
             }
           },
           {
-            // User Role
+            // Role column
             title: 'Role',
+            targets: 2,
+            orderable: false,
+            render: function (data, type, full, meta) {
+              if (full?.roles[0]?.name != undefined){
+                return `<span class="badge bg-info">${full?.roles[0]?.name}</span>`;
+              }else{
+                return `<span class="badge bg-warning">User</span>`;
+              }
+            }
+          },
+          {
+            // Status column
+            title: 'Status',
             targets: 3,
             orderable: false,
             render: function (data, type, full, meta) {
+              // Ví dụ: hiển thị status với màu sắc
+              var html = '';
+              if (data == STATUS_USER_KEY['Inactive']){
+                return `<span class="badge bg-glow ${STATUS_USER_CLASS[data]}">${STATUS_USER_TEXT[data]}</span>`;
+              }else if (data == STATUS_USER_KEY['Active']){
+                return `<span class=" badge bg-glow ${STATUS_USER_CLASS[data]}">${STATUS_USER_TEXT[data]}</span>`;
+              }
 
             }
           },
           {
-            // User Status
-            title: 'Status',
-            targets: 4,
-            orderable: false,
-            render: function (data, type, full, meta) {
-
-            }
-          },
-          {
-            // Actions
+            // Actions column
             targets: -1,
             title: 'Actions',
             searchable: false,
             orderable: false,
+            width:'100px',
             render: function (data, type, full, meta) {
 
+              return (
+                '<div class="d-flex align-items-center">' +
+                '<a href="javascript:;" data-id="'+full.id+'" data-role="'+full?.roles[0]?.name+'" class="btn btn-icon btn-text-secondary waves-effect waves-light rounded-pill delete-record editRoleUser" data-bs-toggle="tooltip"\n' +
+                '                     data-bs-placement="top" data-bs-original-title="Cập nhật">' +
+                '<i class="ti ti-edit"></i>' +
+                '</a>' +
+                '<a href="javascript:;" data-id="'+full.id+'" data-role="'+full?.roles[0]?.name+'" class="btn btn-icon btn-text-secondary waves-effect waves-light rounded-pill delete-record removeRoleUser" data-bs-toggle="tooltip"\n' +
+                '                     data-bs-placement="top" data-bs-original-title="Xoá quyền">' +
+                '<i class="ti ti-trash"></i>' +
+                '</a>' +
+                '</div>'
+              );
             }
           }
         ],
         order: [[2, 'desc']],
+        searching: false,
 
         language: {
           sLengthMenu: 'Show _MENU_',
@@ -663,10 +773,248 @@ $(function () {
             previous: '<i class="ti ti-chevron-left ti-sm"></i>'
           }
         },
+        responsive: {
+          details: {
+            display: $.fn.dataTable.Responsive.display.modal({
+              header: function (row) {
+                var data = row.data();
+                return 'Details of ' + data['full_name'];
+              }
+            }),
+            type: 'column',
+            renderer: function (api, rowIdx, columns) {
+              var data = $.map(columns, function (col, i) {
+                return col.title !== '' // ? Do not show row in modal popup if title is blank (for check box)
+                  ? '<tr data-dt-row="' +
+                  col.rowIndex +
+                  '" data-dt-column="' +
+                  col.columnIndex +
+                  '">' +
+                  '<td>' +
+                  col.title +
+                  ':' +
+                  '</td> ' +
+                  '<td>' +
+                  col.data +
+                  '</td>' +
+                  '</tr>'
+                  : '';
+              }).join('');
 
-
+              return data ? $('<table class="table"/><tbody />').append(data) : false;
+            }
+          }
+        },
       });
-    }
+
+      dtUser.on('draw.dt', function () {
+        $('[data-bs-toggle="tooltip"]').tooltip(); // Khởi tạo lại tooltip sau mỗi lần render
+      });
+    },
+    ShowEditModalRoleUser : function () {
+      $(document).on('click', BTN_EDIT_ROLE_USER, function () {
+        let roleUserId  = $(this).data('id')
+        let roleName    = $(this).data('role')
+        MODAL_EDIT_ROLE_USER.data('id', roleUserId);
+        MODAL_EDIT_ROLE_USER.data('roleName', roleName);
+        MODAL_EDIT_ROLE_USER.modal('show');
+      });
+
+      $(MODAL_EDIT_ROLE_USER).on('show.bs.modal', function (event) {
+        let roleName = $(this).data('roleName')
+        $.ajax({
+          url: URL_RENDER_ROLE,
+          method: 'get',
+          data: {
+            id: $(this).data('id')
+          },
+          success: function (req) {
+              let data = req.data;
+              let html = '';
+              html += `<option value="" >Chọn quyền</option>`;
+              $(data).each(function(key,item){
+                let selected = roleName === item.name ? 'selected' : ''; // Kiểm tra nếu trùng roleName thì chọn
+                html += `<option value="${item.name}" ${selected}>${item.name}</option>`;
+              })
+
+            SELECT_ROLE_USER.html(html)
+
+          },
+          error: function (xhr, status, error) {
+            let errorMessage = 'Có lỗi xảy ra, vui lòng thử lại!';
+
+            // Kiểm tra nếu server trả về JSON lỗi
+            if (xhr.responseJSON && xhr.responseJSON.message) {
+              errorMessage = xhr.responseJSON.message;
+            }
+
+            toastr.error(errorMessage, 'Lỗi!');
+          }
+        });
+      });
+    },
+    UpdateModalRoleUser   : function(){
+      formRoleUser = FormValidation.formValidation(FORM_ROLE_USER_UPDATE, {
+        fields: {
+          role: {
+            validators: {
+              callback: {
+                message: 'Vui lòng chọn vai trò.',
+                callback: function(input) {
+                  console.log(input.value == "");
+                  return input.value !== ""; // Trả về false nếu giá trị là rỗng
+                }
+              },
+              blank: {}
+            }
+          }
+        },
+        plugins: {
+          trigger: new FormValidation.plugins.Trigger(),
+          bootstrap5: new FormValidation.plugins.Bootstrap5({
+            eleValidClass: '',
+            rowSelector: '.mb-3'
+          }),
+          submitButton: new FormValidation.plugins.SubmitButton(),
+          autoFocus: new FormValidation.plugins.AutoFocus()
+        },
+        excluded: false,
+        init: instance => {
+          instance.on('plugins.message.placed', function (e) {
+            if (e.element.parentElement.classList.contains('input-group')) {
+              e.element.parentElement.insertAdjacentElement('afterend', e.messageElement);
+            }
+          });
+        }
+      }).on('core.form.valid', function (e) {
+
+
+        const DATA = {
+          name: SELECT_ROLE_USER.val(),
+          id : MODAL_EDIT_ROLE_USER.data('id'),
+          _token: $('meta[name="csrf-token"]').attr('content')
+        };
+
+
+        $.ajax({
+          url: URL_UPDATE_ROLE_USER,
+          method: 'post',
+          data: DATA,
+          dataType: 'json',
+          beforeSend: function (xhr) {
+            xhr.setRequestHeader('X-CSRF-TOKEN', $('meta[name="csrf-token"]').attr('content'));
+            var html =
+              '<div class="d-flex justify-content-center align-items-center;">' +
+              '<span class="spinner-border me-2 " style="width: 20px; height: 20px" role="status" aria-hidden="true"></span> ' +
+              '</div> ';
+              PERMISSION_SUBMIT_BTN_ROLE_USER.html('').html(html).attr('disabled', true);
+          },
+          success: function (data) {
+            if (data.success === true) {
+              // Hiện thông báo đăng nhập thành công.
+              toastr.success(data.message, 'Thành công!');
+
+              setTimeout(function () {
+                MODAL_EDIT_ROLE_USER.modal('hide');
+
+                // Load table
+                DT_USER_TABLE.DataTable().ajax.reload(null,false);
+                permission.RenderBoxRoles();
+              }, timeOut);
+            } else {
+              toastr.error(data.message, 'Thất bại!');
+            }
+          },
+          error: function (response) {
+            // Hiện thông báo lỗi lỗi
+            if (response.responseJSON.success === false) {
+              toastr.error(response.responseJSON.message, 'Thất bại');
+            }
+
+            // Hiện thông báo lỗi trường input do server trả về
+            let errors = response.responseJSON.errors;
+
+            for (const field in errors) {
+              let message = errors[field].join(', ');
+              formRoleUser
+                // Update the message option
+                .updateValidatorOption(field, 'blank', 'message', message)
+                // Set the field as invalid
+                .updateFieldStatus(field, 'Invalid', 'blank');
+            }
+          }
+        })
+          .done(function () {
+            PERMISSION_SUBMIT_BTN_ROLE_USER.html('Update');
+            PERMISSION_SUBMIT_BTN_ROLE_USER.prop('disabled', false);
+          })
+          .fail(function () {
+            PERMISSION_SUBMIT_BTN_ROLE_USER.html('Update');
+            PERMISSION_SUBMIT_BTN_ROLE_USER.prop('disabled', false);
+          });
+      });
+    },
+    DeleteRoleUser        : function () {
+      $(document).on('click', BTN_DELETE_USER, function () {
+        let id = $(this).data('id');
+        let nameRole = $(this).data('role');
+
+        Swal.fire({
+          title: 'Bạn có chắc muốn xoá?',
+          text: 'Xoá là không thể khôi phục lại được!',
+          icon: 'warning',
+          showCancelButton: true,
+          confirmButtonColor: '#3085d6',
+          cancelButtonColor: '#d33',
+          confirmButtonText: 'Đồng ý!',
+          customClass: {
+            confirmButton: 'btn btn-primary me-1',
+            cancelButton: 'btn btn-label-secondary'
+          },
+          buttonsStyling: false
+        }).then(function (result) {
+          if (result.isConfirmed) {
+            $.ajax({
+              url: URL_DELETE_ROLE_USER,
+              method: 'delete',
+              dataType: 'json',
+              data: {
+                id: id,
+                nameRole : nameRole
+              },
+              beforeSend: function (xhr) {
+                xhr.setRequestHeader('X-CSRF-TOKEN', $('meta[name="csrf-token"]').attr('content'));
+              },
+              success: function (req) {
+                if (req.success) {
+                  toastr.success(req.message, 'Thành công!');
+
+                  setTimeout(function () {
+                    // Render lại dũe liệu
+                    permission.RenderBoxRoles();
+
+                    // Render lại table
+                    DT_USER_TABLE.DataTable().ajax.reload(null,false);
+                  }, timeOut);
+                } else {
+                  toastr.error(req.message, 'Thất bại!');
+                }
+              },
+              error: function (xhr, status, error) {
+                let errorMessage = 'Có lỗi xảy ra, vui lòng thử lại!';
+
+                // Kiểm tra nếu server trả về JSON lỗi
+                if (xhr.responseJSON && xhr.responseJSON.message) {
+                  errorMessage = xhr.responseJSON.message;
+                }
+
+                toastr.error(errorMessage, 'Lỗi!');
+              }
+            });
+          }
+        });
+      });
+    },
   };
 
   $(document).ready(function () {
